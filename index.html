@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="con capacidad para aplicaciones web móviles" content="yes">
+    <meta name="con capacidad para aplicaciones web móviles de apple" content="sí">
+    <meta name="nombre-aplicación" content="moneda">
+    <meta name="apple-mobile-web-app-title" content="moneda">
+    <meta name="tema-color" content="#181c28">
+    <meta name="msapplication-navbutton-color" content="#181c28">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent ">
+    <meta nombre="msapplication-starturl" content="/index.html">
+    <meta nombre="ventana gráfica" content="ancho=ancho del dispositivo, escala inicial=1, reducción para ajustar=no">
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="ico" href="assets/icons/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <title>Binance</title>
+</head>
+
+<body>
+    <span id="timeApi"></span>
+    <div class="container">
+        <section>
+            <section class="form">
+                <form method="GET" endpoint='depth' id="frmNotificacionBinance">
+                    <input type="number" name="txtTemporalidad" placeholder="Temporalidad en minutos" list="listaFracTiempo" required>
+                    <datalist id="listaFracTiempo">
+                        <option value="10">10min</option>
+                        <option value="20">20min</option>
+                        <option value="30">30min</option>
+                        <option value="40">40min</option>
+                        <option value="50">50min</option>
+                        <option value="60">1hra</option>
+                        <option value="120">2hra</option>
+                    </datalist>
+                    <input type="number" name="txtConsultaSeg" placeholder="Consulta en segundos" required>
+                    <input type="number" name="txtCantidaAgrupada" placeholder="N° de agrupación" required>
+                    <input type="number" name="txtPorcentajeMin" step="0.001" placeholder="% minima" required>
+                    <label>Notificar: <input type="checkbox" id="chkNotificarBinance"></label>
+                    <button type="submit">Ejecutar</button>
+                    <button id="btnLimpiarNotifiBinance">Limpiar</button>
+                </form>
+            </section>
+            <section>
+                <div class="tabla-result">
+                    <table class="tabla-css" style="min-width:600px;">
+                        <caption>NOTIFICACIONES</caption>
+                        <thead>
+                            <tr>
+                                <th>Cripto</th>
+                                <th>Hora</th>
+                                <th>Prec. Actual</th>
+                                <th>24hr%</th>
+                                <th>Var. Alza%</th>
+                                <th>24hr dif.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaNotifi">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+        <section>
+            <section class="form">
+                <label for="">Nuevas criptomonedas: <button id="btnListaNuevaCripto">Consultar</button></label>
+                <button id="btnLimpiarNuevaCripto">Limpiar</button>
+            </section>
+            <section>
+                <div class="tabla-result">
+                    <table class="tabla-css" style="min-width:600px;">
+                        <caption>NUEVAS CRIPTOMONEDAS</caption>
+                        <thead class="thead-css-border">
+                            <tr>
+                                <th colspan="2"></th>
+                                <th colspan="4">Precio</th>
+                                <th colspan="2"></th>
+                            </tr>
+                            <tr>
+                                <th>Cripto</th>
+                                <th>Fecha/Hora</th>
+                                <th>Apertura</th>
+                                <th>Actual</th>
+                                <th>Minimo</th>
+                                <th>Maximo</th>
+                                <th>24hr%</th>
+                                <th>Volumen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaNuevaCripto">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+        <section>
+            <section class="form">
+                <label for="">Notificación BTC: <button id="btnLimpiarBtc">Limpiar</button></label>
+                <label for="">Enviar notificación: <input type="checkbox" id="chkNotifiBtc"></label>
+            </section>
+            <section>
+                <div class="tabla-result">
+                    <table class="tabla-css" style="min-width:500px;">
+                        <caption>Lista de notificación BTC</caption>
+                        <thead >
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Prec. Actual</th>
+                                <th>24hr%</th>
+                                <th>24hr dif.</th>
+                                <th>Var. Alza%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaBtcNotifi">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+    </div>
+    <script type="text/javascript" src="js/app.js"></script>
+    <script type="text/javascript" src="js/recursos.js"></script>
+    <script type="text/javascript" src="js/notification.js"></script>
+    <script type="text/javascript" src="js/xhr.js"></script>
+    <script type="text/javascript" src="js/binance.js"></script>
+</body>
+
+</html>
