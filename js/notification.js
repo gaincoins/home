@@ -14,8 +14,8 @@ if (Notification.permission === 'granted') {
             //badge:'https://www.tradingview.com/x/5K73ypQk',
             //image:'https://www.tradingview.com/x/5K73ypQk',
             body: _body,
-            tag: 'renotify',
-            renotify: true,
+            //tag: 'renotify',
+            //renotify: true,
             vibrate: [200, 100, 200, 100, 200, 100, 200],
             icon: './assets/icons/binance.png'
             //timestamp:getDateTime('fh')
@@ -29,8 +29,8 @@ if (Notification.permission === 'granted') {
                 //badge:'https://www.tradingview.com/x/5K73ypQk',
                 //image:'https://www.tradingview.com/x/5K73ypQk',
                 body: _body,
-                tag: 'renotify',
-                renotify: true,
+                //tag: 'renotify',
+                //renotify: true,
                 vibrate: [200, 100, 200, 100, 200, 100, 200],
                 icon: `${_icon>0?'./assets/icons/binance_green.png':'./assets/icons/binance_red.png'}`
                 //timestamp:getDateTime('fh')
