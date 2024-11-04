@@ -29,7 +29,7 @@
         <section>
             <section class="form">
                 <form method="GET" endpoint='depth' id="frmNotificacionBinance">
-                    <input type="number" name="txtTemporalidad" placeholder="Temporalidad en minutos" list="listaFracTiempo" required>
+                    <input type="number" name="txtTemporalidad" title="Temporalidad en minutos" placeholder="Temporalidad en minutos" list="listaFracTiempo" required>
                     <datalist id="listaFracTiempo">
                         <option value="10">10min</option>
                         <option value="20">20min</option>
@@ -39,9 +39,9 @@
                         <option value="60">1hra</option>
                         <option value="120">2hra</option>
                     </datalist>
-                    <input type="number" name="txtConsultaSeg" placeholder="Consulta en segundos" required>
-                    <input type="number" name="txtCantidaAgrupada" placeholder="N° de agrupación" required>
-                    <input type="number" name="txtPorcentajeMin" step="0.001" placeholder="% minima" required>
+                    <input type="number" name="txtConsultaSeg" title="Consulta en segundos" placeholder="Consulta en segundos" required>
+                    <input type="number" name="txtCantidaAgrupada" title="N° de agrupación" placeholder="N° de agrupación" required>
+                    <input type="number" name="txtPorcentajeMin" step="0.001" title="% minima" placeholder="% minima" required>
                     <label>Notificar: <input type="checkbox" id="chkNotificarBinance"></label>
                     <button type="submit">Ejecutar</button>
                     <button id="btnLimpiarNotifiBinance">Limpiar</button>
