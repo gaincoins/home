@@ -1,7 +1,6 @@
 var url = window.location.href;
 var swLocation = '/home/sw.js';
 
-
 if ( navigator.serviceWorker ) {
 
 

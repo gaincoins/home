@@ -1,6 +1,6 @@
-var cacheName = 'gaincoins';
-var filesToCache = [
-  '/',
+let cacheName = 'gaincoins';
+let filesToCache = [
+  './',
   'https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css',
   'assets/icons/favicon.ico'
 ];
