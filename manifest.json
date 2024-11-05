@@ -37,12 +37,12 @@
     "screenshots": [
       {
         "src": "assets/icons/icon-512x512.png",
-        "sizes": "1280x720",
+        "sizes": "any",
         "form_factor": "wide"
       },
       {
         "src": "assets/icons/icon-72x72.png",
-        "sizes": "720x1280",
+        "sizes": "any",
         "form_factor": "narrow"
       }
     ]
