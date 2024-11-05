@@ -1,148 +1,267 @@
-// Variables de configuración de notificaciones
-let chkNotificarBinance = 0;
-let chkNotifiBtc = 0;
 
-// Intervalos y datos
-let intervalBtc;
-let intervalApi;
-let dataBtcBinance;
-let precioBtc = [];
 
-// Inicia los intervalos de consulta y notificación
-const iniciarMonitoreo = (_tempMinuto, _segConsultaApi, _cantidadAgrupadaCalcular, _agruparPorcentajeMin) => {
-    resetIntervalos();
-    intervalBtc = setInterval(() => monitorBtc(_cantidadAgrupadaCalcular), _tempMinuto * 1000 * 60);
-    intervalApi = setInterval(() => consultarApi(_cantidadAgrupadaCalcular, _agruparPorcentajeMin), _segConsultaApi * 1000);
-};
 
-// Reinicia los intervalos para evitar superposiciones
-const resetIntervalos = () => {
-    clearInterval(intervalBtc);
-    clearInterval(intervalApi);
-};
+//VARIABLES DE CHECK GENERAL
+let chkNotificarBinance = 0
+let chkNotifiBtc = 0
 
-// Monitoriza cambios de tendencia en BTC
-const monitorBtc = (_cantidadAgrupadaCalcular) => {
-    const ultimoPrecio = precioBtc.at(-1);
-    const nuevoPrecio = dataBtcBinance?.lastPrice;
+//
+let interval24hr
+let interval24hrTemp
+let interval24hrBtc
+let dataBtcBinance
+let precio24hrBinanceTempNotif = (_tempMinuto, _segConsultaApi, _cantidadAgrupadaCalcular, _agruparPorcentajeMin) => {
+    let idTemp = 0
+    let hora
+    let responseData
+    let loStCripto = null
+    let precioBtc = []
+    clearInterval(interval24hrTemp)
+    clearInterval(interval24hr)
+    clearInterval(interval24hrBtc)
 
-    if (ultimoPrecio && nuevoPrecio && ultimoPrecio !== nuevoPrecio) {
-        const porcentajeCambio = calcularCambioPorcentual(nuevoPrecio, ultimoPrecio);
-        if (chkNotifiBtc && precioBtc.length >= _cantidadAgrupadaCalcular) {
-            mostrarNotificacionBtc(porcentajeCambio);
+    interval24hrTemp = setInterval(() => { idTemp++; }, 1000 * 60 * _tempMinuto)
+    interval24hrBtc = setInterval(() => {
+        let ultBtc = precioBtc.length - 1
+        let calculoBtc = []
+        if (ultBtc != -1) {
+            if (precioBtc[ultBtc] != (dataBtcBinance.lastPrice * 1)) {
+                calculoBtc.push(((((dataBtcBinance.lastPrice * 1) - precioBtc[ultBtc])) * 100 / precioBtc[ultBtc]))
+                if (ultBtc > 0) {
+                    calculoBtc.push(((((precioBtc[ultBtc]) - precioBtc[ultBtc - 1])) * 100 / precioBtc[ultBtc - 1]))
+                    if ((ultBtc > 0 && calculoBtc[0] > 0 && calculoBtc[1] < 0) || (ultBtc > 0 && calculoBtc[0] < 0 && calculoBtc[1] > 0)) precioBtc = [];
+                }
+                if (precioBtc.length >= 3) {
+                    // VALIDAR SI DEBEMOS NOTIFICAR
+                    if (chkNotifiBtc == 1) {
+                        let html = `Precio Actual: ${dataBtcBinance.lastPrice * 1}\nPrecio Apertura: ${dataBtcBinance.openPrice * 1}\nPrecio Alto: ${dataBtcBinance.highPrice * 1}\n24hrs: ${dataBtcBinance.priceChangePercent}%`
+                        showNotificationBtc(`Tendencia a ${calculoBtc[1] > 0 ? 'subida' : 'caida'} de BTC`, html, calculoBtc[1])
+                    }
+                document.querySelector('#listaBtcNotifi').insertAdjacentHTML('beforeend', `<tr style="color:${calculoBtc[1] > 0 ? '#26c487' : '#ff4a49'}!important">
+                <td>${new Date(dataBtcBinance.closeTime).toLocaleString()}</td>
+                <td>${dataBtcBinance.lastPrice * 1}</td>
+                <td>${dataBtcBinance.priceChangePercent}</td>
+                <td>${dataBtcBinance.priceChange*1}</td>
+                <td>${(((dataBtcBinance.lastPrice*1) - precioBtc[0])*100/precioBtc[0]).toFixed(2)}</td>
+                </tr>`); 
+
+                }
+                precioBtc.push(dataBtcBinance.lastPrice * 1)
+            }
+        } else {
+            precioBtc.push(dataBtcBinance.lastPrice * 1)
         }
-        actualizarTablaBtc(nuevoPrecio, porcentajeCambio);
-        precioBtc.push(nuevoPrecio);
-    }
-};
 
-// Consulta la API de Binance y almacena los datos relevantes
-const consultarApi = async (_cantidadAgrupadaCalcular, _agruparPorcentajeMin) => {
-    const responseData = await obtenerDatosApi('https://api.binance.com/api/v1/ticker/24hr');
-    dataBtcBinance = responseData.find(d => d.symbol === 'BTCUSDT');
-    responseData.forEach(data => procesarCriptomoneda(data, _cantidadAgrupadaCalcular, _agruparPorcentajeMin));
-};
 
-// Calcula el cambio porcentual entre dos precios
-const calcularCambioPorcentual = (nuevo, anterior) => (((nuevo - anterior) / anterior) * 100).toFixed(2);
+    }, 1000 * 60 * 1)
+    interval24hr = setInterval(async () => {
+        let respSegc = window.performance.now()
+        responseData = await xhr(`https://api.binance.com/api/v1/ticker/24hr`, 'GET', {}, 'json', {})
+        apiResponseTime(respSegc, '#timeApi')
 
-// Procesa los datos de cada criptomoneda
-const procesarCriptomoneda = (data, _cantidadAgrupadaCalcular, _agruparPorcentajeMin) => {
-    const storedData = obtenerLocalStorage(data.symbol);
-    if (!storedData) guardarCriptoNueva(data);
-    else if (storedData.alzaPrecio) verificarAlzaPrecio(data, storedData, _cantidadAgrupadaCalcular, _agruparPorcentajeMin);
-};
+        hora = getDateTime('h')
+        dataBtcBinance = responseData.find(d => d.symbol == 'BTCUSDT')
+        for (const i in responseData) {
+            if (responseData[i].symbol.includes('USDT')) {
+                loStCripto = localStorage.getItem(responseData[i].symbol)
+                loStCripto = JSON.parse(loStCripto)
+                if (loStCripto == null) {
+                    //localStorage.setItem(responseData[i].symbol, JSON.stringify(responseData[i]))
+                    localStorageBinanceCriptoNew(responseData[i])
+                } else {
+                    if (loStCripto.alzaPrecio !== undefined) {
+                        responseData[i].hora = hora
+                        responseData[i].idTemp = idTemp
+                        responseData[i].procentaje = responseData[i].priceChangePercent
+                        precioAlcistaBinanceSegundo(responseData[i], loStCripto, _cantidadAgrupadaCalcular, _agruparPorcentajeMin)
+                    }
+                }
 
-// Verifica si hay una tendencia alcista y notifica si es necesario
-const verificarAlzaPrecio = (data, storedData, _cantidadAgrupadaCalcular, _agruparPorcentajeMin) => {
-    const alzaPrecio = storedData.alzaPrecio || [];
-    const ultimoPrecio = alzaPrecio.at(-1)?.precio || 0;
-    const cambioPorcentual = calcularCambioPorcentual(data.lastPrice, ultimoPrecio);
-
-    if (cambioPorcentual > _agruparPorcentajeMin && alzaPrecio.length < _cantidadAgrupadaCalcular) {
-        alzaPrecio.push({ hora: getDateTime('h'), precio: data.lastPrice, cambioPorcentual });
-        storedData.alzaPrecio = alzaPrecio;
-        actualizarLocalStorage(data.symbol, storedData);
-
-        if (alzaPrecio.length === _cantidadAgrupadaCalcular && chkNotificarBinance) {
-            mostrarNotificacionBinance(data, alzaPrecio);
-            alzaPrecio.length = 0;  // Reset de alzaPrecio
+            }
         }
-        actualizarTablaNotificacion(data, cambioPorcentual);
+
+    }, 1000 * _segConsultaApi)
+
+}
+
+async function precioAlcistaBinanceSegundo(_data, dataDb, _cantidadAgrupadaCalcular, _agruparPorcentajeMin) {
+    let _alzaPrecio = dataDb.alzaPrecio
+    _alzaPrecio == undefined ? [] : _alzaPrecio
+
+    if (_alzaPrecio.length == 0) {
+        _alzaPrecio.push(
+            {
+                hora: _data.hora,
+                idTemp: _data.idTemp,
+                precio: _data.lastPrice,
+                priceChangePercent: _data.priceChangePercent,
+                procentaAlza: 0
+            })
+        dataDb.alzaPrecio = _alzaPrecio
+
+        //actualizar dblocal
+        localStorage.setItem(_data.symbol, JSON.stringify(dataDb))
+    } else {
+        let ultimoRegistro = _alzaPrecio.length - 1
+        let procentaAlzaValor = ((((_data.lastPrice * 1) - (_alzaPrecio[ultimoRegistro].precio * 1)) * 100) / (_alzaPrecio[ultimoRegistro].precio * 1)).toFixed(4)
+
+        if (_alzaPrecio[ultimoRegistro].idTemp == _data.idTemp && procentaAlzaValor > _agruparPorcentajeMin && ultimoRegistro < _cantidadAgrupadaCalcular) {
+            _alzaPrecio.push(
+                {
+                    hora: _data.hora,
+                    idTemp: _data.idTemp,
+                    precio: _data.lastPrice,
+                    priceChangePercent: _data.priceChangePercent,
+                    procentaAlza: procentaAlzaValor
+                }
+            )
+            dataDb.alzaPrecio = _alzaPrecio
+
+            // Consultar si desea que se le notifique 
+            if (_alzaPrecio.length == _cantidadAgrupadaCalcular) {
+
+                // Ver si esta seleccionado para enviar notificación
+                if (chkNotificarBinance == 1) {
+                    let body = `Cripto: ${dataDb.symbol.replace('USDT', '')} - 24h%: ${_data.priceChangePercent * 1}`
+                    let j = 1
+                    while (j < _alzaPrecio.length) {
+                        body += `\n Hra: ${_alzaPrecio[j].hora} - Precio: ${_alzaPrecio[j].precio * 1} (${_alzaPrecio[j].procentaAlza * 1}%)`
+                        j++
+                    }
+                    body += '\n'
+                    showNotification(
+                        `24h - ${dataBtcBinance.symbol.replace('USDT', '')} : ${dataBtcBinance.lastPrice * 1} (${dataBtcBinance.priceChangePercent}%) 🠗 ${dataBtcBinance.lowPrice * 1} - 🠕 ${dataBtcBinance.highPrice * 1}`
+                        , body);
+                }
+                dataDb.alzaPrecio = []
+                //Listar en html
+                document.querySelector('#listaNotifi').insertAdjacentHTML('beforeend', `<tr style="color:#26c487!important">
+                <td>${_data.symbol.replace('USDT', '')}</td>
+                <td>${_data.hora}</td>
+                <td>${_data.lastPrice * 1}</td>
+                <td>${_data.priceChangePercent}</td>
+                <td>${_alzaPrecio.reduce((a, b) => (a + b.procentaAlza * 1), 0).toFixed(2)}</td>
+                <td>${_data.priceChange * 1}</td>
+                </tr>`);
+            }
+            //actualizar dblocal
+            localStorage.setItem(_data.symbol, JSON.stringify(dataDb))
+        }
+
+        if (_alzaPrecio[ultimoRegistro].idTemp !== _data.idTemp) {
+            dataDb.alzaPrecio = []
+            localStorage.setItem(_data.symbol, JSON.stringify(dataDb))
+        }
+
     }
-};
 
-// Muestra una notificación de BTC
-const mostrarNotificacionBtc = (porcentajeCambio) => {
-    const tendencia = porcentajeCambio > 0 ? 'subida' : 'caída';
-    const mensaje = `Tendencia a ${tendencia} de BTC\nPrecio Actual: ${dataBtcBinance.lastPrice}`;
-    showNotificationBtc(`BTC ${tendencia}`, mensaje, porcentajeCambio);
-};
+}
 
-// Muestra una notificación de alza en Binance
-const mostrarNotificacionBinance = (data, alzaPrecio) => {
-    let body = `Cripto: ${data.symbol.replace('USDT', '')} - 24h%: ${data.priceChangePercent}\n`;
-    alzaPrecio.forEach(item => body += `Hora: ${item.hora} - Precio: ${item.precio} (${item.cambioPorcentual}%)\n`);
-    showNotification(`24h - ${data.symbol}`, body);
-};
+//Alertar si ahi nueva moneda
+let localStorageBinanceCriptoNew = (_data) => {
 
-// Guarda una nueva criptomoneda en el almacenamiento local
-const guardarCriptoNueva = (data) => {
-    data.alzaPrecio = [];
-    actualizarLocalStorage(data.symbol, data);
-    mostrarNotificacionNuevaCripto(data);
-};
+    showNotification(`NUEVA CRIPTO [${_data.symbol.replace('USDT', '')}] - ${getDateTime('fh')}`,
+        `Precio [ Act: ${_data.lastPrice * 1} - Apr: ${_data.openPrice * 1} ]\nPrecio [ Baj: ${_data.lowPrice * 1} - Alt: ${_data.highPrice * 1}]\nCambio Pre: ${_data.priceChange * 1} - (${_data.priceChangePercent * 1}%)\nVolumne: ${(_data.volume * 1).toLocaleString('es')}`);
 
-// Muestra notificación de nueva criptomoneda
-const mostrarNotificacionNuevaCripto = (data) => {
-    const mensaje = `Nueva Cripto [${data.symbol.replace('USDT', '')}] Precio Actual: ${data.lastPrice}`;
-    showNotification(`NUEVA CRIPTO: ${data.symbol}`, mensaje);
-};
+    _data.alzaPrecio = []
+    // Guardar en el listado de criptomonedas
+    localStorage.setItem(_data.symbol, JSON.stringify(_data));
 
-// Función genérica para obtener datos de la API
-const obtenerDatosApi = async (url) => {
-    const inicio = window.performance.now();
-    const response = await xhr(url, 'GET', {}, 'json', {});
-    apiResponseTime(inicio, '#timeApi');
-    return response;
-};
+    //Guardar como temporal
+    let nuevaCripto = JSON.parse(localStorage.getItem('nuevaCripto'))
+    nuevaCripto = nuevaCripto == null ? [] : nuevaCripto
+    nuevaCripto.push(_data)
+    localStorage.setItem('nuevaCripto', JSON.stringify(nuevaCripto));
+}
 
-// Utilidades de almacenamiento en localStorage
-const obtenerLocalStorage = (key) => JSON.parse(localStorage.getItem(key));
-const actualizarLocalStorage = (key, data) => localStorage.setItem(key, JSON.stringify(data));
 
-// Actualiza las tablas de notificaciones
-const actualizarTablaBtc = (precio, porcentajeCambio) => {
-    const color = porcentajeCambio > 0 ? '#26c487' : '#ff4a49';
-    document.querySelector('#listaBtcNotifi').insertAdjacentHTML('beforeend', `
-        <tr style="color:${color}!important">
-            <td>${new Date(dataBtcBinance.closeTime).toLocaleString()}</td>
-            <td>${precio}</td>
-            <td>${dataBtcBinance.priceChangePercent}</td>
-            <td>${dataBtcBinance.priceChange}</td>
-            <td>${porcentajeCambio}</td>
-        </tr>`);
-};
-
-const actualizarTablaNotificacion = (data, cambioPorcentual) => {
-    document.querySelector('#listaNotifi').insertAdjacentHTML('beforeend', `
-        <tr style="color:#26c487!important">
-            <td>${data.symbol.replace('USDT', '')}</td>
-            <td>${getDateTime('h')}</td>
-            <td>${data.lastPrice}</td>
-            <td>${data.priceChangePercent}</td>
-            <td>${cambioPorcentual}</td>
-            <td>${data.priceChange}</td>
-        </tr>`);
-};
-
-// Eventos de interfaz de usuario
-document.querySelector('#frmNotificacionBinance').addEventListener('submit', evt => {
+document.querySelector('#frmNotificacionBinance').addEventListener('submit', async (evt) => {
     evt.preventDefault();
-    const form = getJsonFormData(new FormData(evt.target));
-    iniciarMonitoreo(form.txtTemporalidad, form.txtConsultaSeg, form.txtCantidaAgrupada, form.txtPorcentajeMin);
-});
+    let data = getJsonFormData(new FormData(evt.target))
+    precio24hrBinanceTempNotif(data.txtTemporalidad * 1, data.txtConsultaSeg * 1, data.txtCantidaAgrupada * 1, data.txtPorcentajeMin * 1)
 
-// Controles de notificación
-document.querySelector('#chkNotificarBinance').addEventListener('change', e => chkNotificarBinance = e.target.checked ? 1 : 0);
-document.querySelector('#chkNotifiBtc').addEventListener('change', e => chkNotifiBtc = e.target.checked ? 1 : 0);
+})
+
+document.querySelector('#btnListaNuevaCripto').addEventListener('click', e => {
+    e.preventDefault()
+    let dataNuevaCripto = JSON.parse(localStorage.getItem('nuevaCripto'))
+    let html = ''
+    for (const v of dataNuevaCripto) {
+        html += `<tr>
+        <td>${v.symbol.replace('USDT', '')}</td>
+        <td>${new Date(v.openTime).toLocaleString()}</td>
+        <td>${(v.openPrice * 1).toFixed(2)}</td>
+        <td>${v.lastPrice * 1}</td>
+        <td>${v.lowPrice * 1}</td>
+        <td>${v.highPrice * 1}</td>
+        <td>${v.priceChangePercent * 1}</td>
+        <td>${numberLocaleString((v.volume * 1), 0)}</td>
+        </tr>`
+    }
+    document.querySelector('#listaNuevaCripto').innerHTML = html
+})
+
+document.querySelector('#chkNotificarBinance').addEventListener('change', e => {
+    chkNotificarBinance = e.target.checked == true ? 1 : 0
+})
+document.querySelector('#chkNotifiBtc').addEventListener('change', e => {
+    chkNotifiBtc = e.target.checked == true ? 1 : 0
+})
+
+document.querySelector('#btnLimpiarBtc').addEventListener('click', e => {
+    document.querySelector('#listaBtcNotifi').innerHTML = ''
+})
+
+
+document.querySelector('#btnLimpiarNotifiBinance').addEventListener('click', e => {
+    document.querySelector('#listaNotifi').innerHTML = ''
+})
+
+document.querySelector('#btnLimpiarNuevaCripto').addEventListener('click', e => {
+    document.querySelector('#listaNuevaCripto').innerHTML = ''
+    localStorage.nuevaCripto = '[]'
+})
+
+window.addEventListener('load', async e => {
+    chkNotificarBinance = e.target.checked == true ? 1 : 0
+    chkNotifiBtc = e.target.checked == true ? 1 : 0
+    if (localStorage.getItem('BTCUSDT') == null) {
+        const responseData = await xhr(`https://api.binance.com/api/v1/ticker/24hr`, 'GET', {}, 'json', {})
+        console.log(responseData)
+        for (const i in responseData) {
+            if (responseData[i].symbol.includes('USDT')) {
+                responseData[i].alzaPrecio = []
+                // Guardar en el listado de criptomonedas
+                localStorage.setItem(responseData[i].symbol, JSON.stringify(responseData[i]));
+
+            }
+        }
+
+    }
+    if (localStorage.getItem('nuevaCripto') == null) {
+        localStorage.setItem('nuevaCripto', "[]");
+    }
+})
+
+/*
+try {
+    const response = await fetch('https://api.binance.com/api/v1/ticker/24hr');
+    if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+
+    // Usamos map para filtrar y estructurar los datos en un solo paso
+    const usdtPairs = data
+        .filter(item => item.symbol.includes('USDT')) // Filtra solo pares con 'USDT'
+        .map(item => ({
+            nombre: item.symbol,               // Agrega el nombre del símbolo
+            data: { ...item, alzaPrecio: [] }  // Agrega los datos originales y alzaPrecio vacío
+        }));
+
+    // Guardamos cada objeto en la base de datos
+    await dbCrip.addRecord('cripto', usdtPairs);
+} catch (error) {
+    console.error('Error fetching data from Binance API:', error);
+}
+*/

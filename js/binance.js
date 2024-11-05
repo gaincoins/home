@@ -238,6 +238,9 @@ window.addEventListener('load', async e => {
         }
 
     }
+    if (localStorage.getItem('nuevaCripto') == null) {
+        localStorage.setItem('nuevaCripto', "[]");
+    }
 })
 
 
