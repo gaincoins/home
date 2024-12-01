@@ -136,7 +136,7 @@ async function precioAlcistaBinanceSegundo(_data, dataDb, _cantidadAgrupadaCalcu
                 dataDb.alzaPrecio = []
                 //Listar en html
                 document.querySelector('#listaNotifi').insertAdjacentHTML('beforeend', `<tr style="color:#26c487!important">
-                <td>${_data.symbol.replace('USDT', '')}</td>
+                <td>${_data.symbol.replace('USDT', '')} - ${_data.idTemp}</td>
                 <td>${_data.hora}</td>
                 <td>${_data.lastPrice * 1}</td>
                 <td>${_data.priceChangePercent}</td>
